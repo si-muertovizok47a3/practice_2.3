@@ -1,87 +1,49 @@
 import tkinter as tk
-from tkinter import ttk
 import psutil
-from datetime import datetime
 
 
-class SystemMonitorApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Системный монитор")
-        self.root.geometry("500x400")
-        self.root.configure(bg='#f0f0f0')
+def update():
+    cpu = psutil.cpu_percent()
+    ram = psutil.virtual_memory()
+    disk = psutil.disk_usage('/')
 
-        title = tk.Label(root, text="СИСТЕМНЫЙ МОНИТОР", font=("Arial", 16, "bold"), bg='#f0f0f0')
-        title.pack(pady=10)
+    cpu_label.config(text=f"CPU: {cpu}%")
+    ram_label.config(text=f"RAM: {ram.percent}%")
+    disk_label.config(text=f"DISK: {disk.percent}%")
 
-        cpu_frame = tk.LabelFrame(root, text="CPU", font=("Arial", 12, "bold"), bg='#f0f0f0')
-        cpu_frame.pack(fill='x', padx=20, pady=10)
+    cpu_bar['value'] = cpu
+    ram_bar['value'] = ram.percent
+    disk_bar['value'] = disk.percent
 
-        self.cpu_label = tk.Label(cpu_frame, text="Загрузка: 0%", font=("Arial", 11), bg='#f0f0f0')
-        self.cpu_label.pack(pady=5)
+    info_label.config(
+        text=f"RAM: {ram.used // (1024 ** 3)} GB / {ram.total // (1024 ** 3)} GB | DISK: {disk.used // (1024 ** 3)} GB / {disk.total // (1024 ** 3)} GB")
 
-        self.cpu_bar = ttk.Progressbar(cpu_frame, length=400, mode='determinate')
-        self.cpu_bar.pack(pady=5)
-
-        ram_frame = tk.LabelFrame(root, text="Оперативная память (RAM)", font=("Arial", 12, "bold"), bg='#f0f0f0')
-        ram_frame.pack(fill='x', padx=20, pady=10)
-
-        self.ram_label = tk.Label(ram_frame, text="Использовано: 0 GB / 0 GB (0%)", font=("Arial", 11), bg='#f0f0f0')
-        self.ram_label.pack(pady=5)
-
-        self.ram_bar = ttk.Progressbar(ram_frame, length=400, mode='determinate')
-        self.ram_bar.pack(pady=5)
-
-        disk_frame = tk.LabelFrame(root, text="Диск", font=("Arial", 12, "bold"), bg='#f0f0f0')
-        disk_frame.pack(fill='x', padx=20, pady=10)
-
-        self.disk_label = tk.Label(disk_frame, text="Использовано: 0 GB / 0 GB (0%)", font=("Arial", 11), bg='#f0f0f0')
-        self.disk_label.pack(pady=5)
-
-        self.disk_bar = ttk.Progressbar(disk_frame, length=400, mode='determinate')
-        self.disk_bar.pack(pady=5)
-
-        btn_frame = tk.Frame(root, bg='#f0f0f0')
-        btn_frame.pack(pady=10)
-
-        btn_refresh = tk.Button(btn_frame, text="Обновить сейчас", command=self.update_info, bg='#3498db', fg='white',
-                                font=("Arial", 10))
-        btn_refresh.pack(side=tk.LEFT, padx=5)
-с
-        self.status_label = tk.Label(root, text="", font=("Arial", 9), bg='#f0f0f0', fg='gray')
-        self.status_label.pack(pady=5)
-
-        self.update_info()
-        self.auto_update()
-
-    def update_info(self):
-        try:
-            cpu = psutil.cpu_percent()
-            self.cpu_label.config(text=f"Загрузка: {cpu}%")
-            self.cpu_bar['value'] = cpu
-
-            ram = psutil.virtual_memory()
-            used_gb = ram.used // (1024 ** 3)
-            total_gb = ram.total // (1024 ** 3)
-            self.ram_label.config(text=f"Использовано: {used_gb} GB / {total_gb} GB ({ram.percent}%)")
-            self.ram_bar['value'] = ram.percent
-
-            disk = psutil.disk_usage('/')
-            used_gb = disk.used // (1024 ** 3)
-            total_gb = disk.total // (1024 ** 3)
-            self.disk_label.config(text=f"Использовано: {used_gb} GB / {total_gb} GB ({disk.percent}%)")
-            self.disk_bar['value'] = disk.percent
-
-            self.status_label.config(text=f"Обновлено: {datetime.now().strftime('%H:%M:%S')}")
-        except Exception as e:
-            self.status_label.config(text=f"Ошибка: {e}")
-
-    def auto_update(self):
-        self.update_info()
-        self.root.after(2000, self.auto_update)
+    root.after(1000, update)
 
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = SystemMonitorApp(root)
-    root.mainloop()
+root = tk.Tk()
+root.title("Системный монитор")
+root.geometry("400x300")
+root.configure(bg='black')
+
+cpu_label = tk.Label(root, text="CPU: 0%", font=("Arial", 14), fg="white", bg="black")
+cpu_label.pack(pady=5)
+cpu_bar = tk.ttk.Progressbar(root, length=300, mode='determinate')
+cpu_bar.pack(pady=5)
+
+ram_label = tk.Label(root, text="RAM: 0%", font=("Arial", 14), fg="white", bg="black")
+ram_label.pack(pady=5)
+ram_bar = tk.ttk.Progressbar(root, length=300, mode='determinate')
+ram_bar.pack(pady=5)
+
+disk_label = tk.Label(root, text="DISK: 0%", font=("Arial", 14), fg="white", bg="black")
+disk_label.pack(pady=5)
+disk_bar = tk.ttk.Progressbar(root, length=300, mode='determinate')
+disk_bar.pack(pady=5)
+
+info_label = tk.Label(root, text="", font=("Arial", 10), fg="gray", bg="black")
+info_label.pack(pady=10)
+
+update()
+
+root.mainloop()
