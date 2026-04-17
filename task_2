@@ -1,88 +1,71 @@
 import tkinter as tk
-from tkinter import ttk, scrolledtext, messagebox
+from tkinter import ttk, messagebox
 import requests
-from datetime import datetime
 
 
-class CurrencyApp:
-    def __init__(self, root):
-        self.root = root
-        self.root.title("Курсы валют")
-        self.root.geometry("600x500")
-        self.root.configure(bg='#f0f0f0')
-
-        self.rates = None
-
-        title = tk.Label(root, text="КУРСЫ ВАЛЮТ ЦБ РФ", font=("Arial", 16, "bold"), bg='#f0f0f0')
-        title.pack(pady=10)
-
-        search_frame = tk.Frame(root, bg='#f0f0f0')
-        search_frame.pack(fill='x', padx=20, pady=10)
-
-        tk.Label(search_frame, text="Код валюты:", font=("Arial", 11), bg='#f0f0f0').pack(side=tk.LEFT, padx=5)
-        self.code_entry = tk.Entry(search_frame, width=10, font=("Arial", 11))
-        self.code_entry.pack(side=tk.LEFT, padx=5)
-
-        btn_search = tk.Button(search_frame, text="Показать курс", command=self.show_currency, bg='#2ecc71', fg='white',
-                               font=("Arial", 10))
-        btn_search.pack(side=tk.LEFT, padx=5)
-
-        btn_all = tk.Button(search_frame, text="Все курсы", command=self.show_all, bg='#3498db', fg='white',
-                            font=("Arial", 10))
-        btn_all.pack(side=tk.LEFT, padx=5)
-
-        btn_refresh = tk.Button(search_frame, text="Обновить", command=self.load_rates, bg='#e67e22', fg='white',
-                                font=("Arial", 10))
-        btn_refresh.pack(side=tk.LEFT, padx=5)
-
-        self.text_area = scrolledtext.ScrolledText(root, width=70, height=25, font=("Courier", 10))
-        self.text_area.pack(fill='both', expand=True, padx=20, pady=10)
-
-        self.status_label = tk.Label(root, text="", font=("Arial", 9), bg='#f0f0f0', fg='gray')
-        self.status_label.pack(pady=5)
-
-        self.load_rates()
-
-    def load_rates(self):
-        try:
-            response = requests.get("https://www.cbr-xml-daily.ru/daily_json.js", timeout=10)
-            data = response.json()
-            self.rates = data["Valute"]
-            self.status_label.config(text=f"Курсы обновлены: {datetime.now().strftime('%H:%M:%S')}")
-            return True
-        except Exception as e:
-            messagebox.showerror("Ошибка", f"Не удалось загрузить курсы: {e}")
-            self.status_label.config(text="Ошибка загрузки")
-            return False
-
-    def show_all(self):
-        if not self.rates and not self.load_rates():
-            return
-
-        self.text_area.delete(1.0, tk.END)
-        self.text_area.insert(tk.END, f"{'Код':<8} {'Название':<35} {'Курс':>12}\n")
-        self.text_area.insert(tk.END, "=" * 60 + "\n")
-
-        for code, info in self.rates.items():
-            self.text_area.insert(tk.END, f"{code:<8} {info['Name']:<35} {info['Value']:>10.2f} руб.\n")
-
-    def show_currency(self):
-        if not self.rates and not self.load_rates():
-            return
-
-        code = self.code_entry.get().upper()
-        if code in self.rates:
-            info = self.rates[code]
-            self.text_area.delete(1.0, tk.END)
-            self.text_area.insert(tk.END, f"Валюта: {info['Name']}\n")
-            self.text_area.insert(tk.END, f"Код: {code}\n")
-            self.text_area.insert(tk.END, f"Курс: {info['Value']:.2f} рублей\n")
-            self.text_area.insert(tk.END, f"Номинал: {info['Nominal']}\n")
-        else:
-            messagebox.showerror("Ошибка", f"Валюта {code} не найдена!")
+def load_rates():
+    try:
+        response = requests.get("https://www.cbr-xml-daily.ru/daily_json.js")
+        data = response.json()
+        return data["Valute"]
+    except:
+        messagebox.showerror("Ошибка", "Не удалось загрузить курсы валют")
+        return None
 
 
-if __name__ == "__main__":
-    root = tk.Tk()
-    app = CurrencyApp(root)
-    root.mainloop()
+def show_all():
+    rates = load_rates()
+    if not rates:
+        return
+
+    text.delete(1.0, tk.END)
+    text.insert(tk.END, f"{'Код':<8} {'Валюта':<30} {'Курс':>10}\n")
+    text.insert(tk.END, "=" * 50 + "\n")
+
+    for code, info in rates.items():
+        text.insert(tk.END, f"{code:<8} {info['Name']:<30} {info['Value']:>10.2f}\n")
+
+
+def show_currency():
+    code = entry.get().upper()
+    rates = load_rates()
+
+    if not rates:
+        return
+
+    if code in rates:
+        info = rates[code]
+        text.delete(1.0, tk.END)
+        text.insert(tk.END, f"Валюта: {info['Name']}\n")
+        text.insert(tk.END, f"Код: {code}\n")
+        text.insert(tk.END, f"Курс: {info['Value']:.2f} руб.\n")
+        text.insert(tk.END, f"Номинал: {info['Nominal']}\n")
+    else:
+        messagebox.showerror("Ошибка", f"Валюта {code} не найдена!")
+
+
+root = tk.Tk()
+root.title("Курсы валют")
+root.geometry("500x450")
+root.configure(bg='#f0f0f0')
+
+title = tk.Label(root, text="КУРСЫ ВАЛЮТ ЦБ РФ", font=("Arial", 16, "bold"), bg='#f0f0f0')
+title.pack(pady=10)
+
+frame = tk.Frame(root, bg='#f0f0f0')
+frame.pack(pady=10)
+
+tk.Label(frame, text="Код валюты:", font=("Arial", 11), bg='#f0f0f0').pack(side=tk.LEFT, padx=5)
+entry = tk.Entry(frame, width=10, font=("Arial", 11))
+entry.pack(side=tk.LEFT, padx=5)
+
+btn_search = tk.Button(frame, text="Найти", command=show_currency, bg='#2ecc71', fg='white')
+btn_search.pack(side=tk.LEFT, padx=5)
+
+btn_all = tk.Button(frame, text="Все курсы", command=show_all, bg='#3498db', fg='white')
+btn_all.pack(side=tk.LEFT, padx=5)
+
+text = tk.Text(root, width=60, height=20, font=("Courier", 10))
+text.pack(pady=10)
+
+root.mainloop()
